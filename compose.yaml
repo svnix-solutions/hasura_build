@@ -1,0 +1,56 @@
+# Hasura GraphQL Engine v2 (Community Edition).
+#
+# Hasura has no embedded storage: it keeps its metadata in Postgres. This
+# stack points at an EXISTING Postgres rather than shipping its own, so the
+# metadata is covered by whatever backup job already protects that instance.
+#
+# Publishes nothing publicly by default -- the bind address defaults to
+# loopback. It joins the shared "cloudflared" network so a reverse proxy or
+# tunnel connector on the same host can reach it as http://hasura:8080.
+
+services:
+  hasura:
+    image: hasura/graphql-engine:${HASURA_VERSION:-v2.50.3-ce}
+    container_name: hasura
+    restart: unless-stopped
+    environment:
+      # Metadata + default data source.
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${HASURA_DB_USER:-hasura}:${HASURA_DB_PASSWORD:?HASURA_DB_PASSWORD is required}@${HASURA_DB_HOST:?HASURA_DB_HOST is required}:${HASURA_DB_PORT:-5432}/${HASURA_DB_NAME:-hasura}
+
+      # Required. Without it the GraphQL API and console are UNAUTHENTICATED
+      # and anyone who can reach the port has full admin rights.
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET:?HASURA_ADMIN_SECRET is required}
+
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "${HASURA_ENABLE_CONSOLE:-true}"
+
+      # Dev mode returns internal error details to API clients. Keep it off
+      # anywhere the endpoint is reachable by anyone you do not trust.
+      HASURA_GRAPHQL_DEV_MODE: "${HASURA_DEV_MODE:-false}"
+
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: "${HASURA_LOG_TYPES:-startup, http-log, webhook-log, websocket-log}"
+      HASURA_GRAPHQL_CORS_DOMAIN: "${HASURA_CORS_DOMAIN:-*}"
+
+      # Roles are opt-in: unset means every request must authenticate.
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: "${HASURA_UNAUTHORIZED_ROLE:-}"
+
+    # Defaults to loopback. Set HASURA_BIND to a LAN address for direct access.
+    ports:
+      - "${HASURA_BIND:-127.0.0.1}:${HASURA_PORT:-8080}:8080"
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+
+    networks:
+      - tunnel
+      - default
+
+networks:
+  # Shared with the tunnel connector / reverse proxy on this host, so they can
+  # reach the container by name. Create it once: docker network create cloudflared
+  tunnel:
+    external: true
+    name: ${CLOUDFLARE_TUNNEL_NETWORK:-cloudflared}
