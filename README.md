@@ -39,13 +39,23 @@ Other defaults chosen with that in mind:
 | Setting | Default | Why |
 | --- | --- | --- |
 | `HASURA_GRAPHQL_DEV_MODE` | `false` | dev mode returns internal error details to clients |
-| `HASURA_GRAPHQL_UNAUTHORIZED_ROLE` | *(not set)* | unauthenticated requests get no role at all |
+| `HASURA_GRAPHQL_UNAUTHORIZED_ROLE` | *(not set)* | unauthenticated requests are rejected outright |
 | `HASURA_BIND` | `127.0.0.1` | nothing is exposed off-host unless you ask |
 | `HASURA_GRAPHQL_CORS_DOMAIN` | `*` | **widen-open; narrow this to your origins** |
 
-Note that `HASURA_GRAPHQL_UNAUTHORIZED_ROLE` must be **absent**, not empty.
-Hasura rejects an empty string with `empty string not allowed` and refuses to
-start, so it is not declared in `compose.yaml` at all.
+### Anonymous access
+
+`HASURA_GRAPHQL_UNAUTHORIZED_ROLE` names the role given to requests that carry
+no authentication. Leave it unset and such requests are rejected outright; set
+it — conventionally to `anonymous` — and they are evaluated as that role.
+
+Setting it is safe on its own: the role grants nothing until you define
+permissions for it in the console. It only widens access once you do.
+
+It must be **absent rather than empty** — Hasura rejects an empty string with
+`empty string not allowed` and crash-loops. That is why `compose.yaml` uses
+list-form `environment` with a bare key, which Compose passes through only
+when the variable is actually set.
 
 If you expose the console to the internet, put an authenticating proxy
 (Cloudflare Access, or similar) in front of it. The admin secret is a single

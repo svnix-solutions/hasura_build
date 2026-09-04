@@ -13,28 +13,33 @@ services:
     image: hasura/graphql-engine:${HASURA_VERSION:-v2.50.3-ce}
     container_name: hasura
     restart: unless-stopped
+    # List form, not map form: a bare "KEY" is passed through only when the
+    # variable is actually set. That matters for
+    # HASURA_GRAPHQL_UNAUTHORIZED_ROLE, which Hasura rejects as an empty string
+    # ("empty string not allowed") and then crash-loops -- so it cannot simply
+    # be defaulted to "".
     environment:
       # Metadata + default data source.
-      HASURA_GRAPHQL_DATABASE_URL: postgres://${HASURA_DB_USER:-hasura}:${HASURA_DB_PASSWORD:?HASURA_DB_PASSWORD is required}@${HASURA_DB_HOST:?HASURA_DB_HOST is required}:${HASURA_DB_PORT:-5432}/${HASURA_DB_NAME:-hasura}
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://${HASURA_DB_USER:-hasura}:${HASURA_DB_PASSWORD:?HASURA_DB_PASSWORD is required}@${HASURA_DB_HOST:?HASURA_DB_HOST is required}:${HASURA_DB_PORT:-5432}/${HASURA_DB_NAME:-hasura}
 
       # Required. Without it the GraphQL API and console are UNAUTHENTICATED
       # and anyone who can reach the port has full admin rights.
-      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET:?HASURA_ADMIN_SECRET is required}
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_ADMIN_SECRET:?HASURA_ADMIN_SECRET is required}
 
-      HASURA_GRAPHQL_ENABLE_CONSOLE: "${HASURA_ENABLE_CONSOLE:-true}"
+      - HASURA_GRAPHQL_ENABLE_CONSOLE=${HASURA_ENABLE_CONSOLE:-true}
 
       # Dev mode returns internal error details to API clients. Keep it off
       # anywhere the endpoint is reachable by anyone you do not trust.
-      HASURA_GRAPHQL_DEV_MODE: "${HASURA_DEV_MODE:-false}"
+      - HASURA_GRAPHQL_DEV_MODE=${HASURA_DEV_MODE:-false}
 
-      HASURA_GRAPHQL_ENABLED_LOG_TYPES: "${HASURA_LOG_TYPES:-startup, http-log, webhook-log, websocket-log}"
-      HASURA_GRAPHQL_CORS_DOMAIN: "${HASURA_CORS_DOMAIN:-*}"
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=${HASURA_LOG_TYPES:-startup, http-log, webhook-log, websocket-log}
+      - HASURA_GRAPHQL_CORS_DOMAIN=${HASURA_CORS_DOMAIN:-*}
 
-      # HASURA_GRAPHQL_UNAUTHORIZED_ROLE is deliberately NOT declared here.
-      # Hasura rejects it as an empty string ("empty string not allowed") and
-      # crash-loops, so it cannot simply be defaulted to "". Absent is also the
-      # safe setting: unauthenticated requests get no role at all. Add it to
-      # your own compose override only if you actually want anonymous access.
+      # Optional. Names the role given to requests that carry no auth. Leave it
+      # unset and unauthenticated requests are rejected outright. Set it (e.g.
+      # to "unauthorized") and they are evaluated as that role -- which grants
+      # nothing until you define permissions for it in the console.
+      - HASURA_GRAPHQL_UNAUTHORIZED_ROLE
 
     # Defaults to loopback. Set HASURA_BIND to a LAN address for direct access.
     ports:
