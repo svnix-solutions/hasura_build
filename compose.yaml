@@ -30,8 +30,11 @@ services:
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: "${HASURA_LOG_TYPES:-startup, http-log, webhook-log, websocket-log}"
       HASURA_GRAPHQL_CORS_DOMAIN: "${HASURA_CORS_DOMAIN:-*}"
 
-      # Roles are opt-in: unset means every request must authenticate.
-      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: "${HASURA_UNAUTHORIZED_ROLE:-}"
+      # HASURA_GRAPHQL_UNAUTHORIZED_ROLE is deliberately NOT declared here.
+      # Hasura rejects it as an empty string ("empty string not allowed") and
+      # crash-loops, so it cannot simply be defaulted to "". Absent is also the
+      # safe setting: unauthenticated requests get no role at all. Add it to
+      # your own compose override only if you actually want anonymous access.
 
     # Defaults to loopback. Set HASURA_BIND to a LAN address for direct access.
     ports:

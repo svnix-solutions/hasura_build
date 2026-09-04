@@ -39,9 +39,13 @@ Other defaults chosen with that in mind:
 | Setting | Default | Why |
 | --- | --- | --- |
 | `HASURA_GRAPHQL_DEV_MODE` | `false` | dev mode returns internal error details to clients |
-| `HASURA_GRAPHQL_UNAUTHORIZED_ROLE` | *(empty)* | unauthenticated requests get no role at all |
+| `HASURA_GRAPHQL_UNAUTHORIZED_ROLE` | *(not set)* | unauthenticated requests get no role at all |
 | `HASURA_BIND` | `127.0.0.1` | nothing is exposed off-host unless you ask |
 | `HASURA_GRAPHQL_CORS_DOMAIN` | `*` | **widen-open; narrow this to your origins** |
+
+Note that `HASURA_GRAPHQL_UNAUTHORIZED_ROLE` must be **absent**, not empty.
+Hasura rejects an empty string with `empty string not allowed` and refuses to
+start, so it is not declared in `compose.yaml` at all.
 
 If you expose the console to the internet, put an authenticating proxy
 (Cloudflare Access, or similar) in front of it. The admin secret is a single
