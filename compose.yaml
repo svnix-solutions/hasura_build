@@ -6,12 +6,18 @@
 #
 # Publishes nothing publicly by default -- the bind address defaults to
 # loopback. It joins the shared "cloudflared" network so a reverse proxy or
-# tunnel connector on the same host can reach it as http://hasura:8080.
+# tunnel connector on the same host can reach it by container name.
+#
+# Multiple instances can share a host: set HASURA_CONTAINER_NAME and
+# HASURA_PORT per deployment so the container names and published ports do not
+# collide. Give each its own database too.
 
 services:
   hasura:
     image: hasura/graphql-engine:${HASURA_VERSION:-v2.50.3-ce}
-    container_name: hasura
+    # Parameterised so several regional instances can run on one host without
+    # colliding. Set it per deployment, e.g. hasura-in / hasura-ae / hasura-ng.
+    container_name: ${HASURA_CONTAINER_NAME:-hasura}
     restart: unless-stopped
     # List form, not map form: a bare "KEY" is passed through only when the
     # variable is actually set. That matters for

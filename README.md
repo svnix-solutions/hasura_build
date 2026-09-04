@@ -81,10 +81,25 @@ The console is at `/console`, and asks for the admin secret.
 
 ---
 
+## Running several instances on one host
+
+Give each its own container name, published port and database:
+
+| | instance A | instance B |
+| --- | --- | --- |
+| `HASURA_CONTAINER_NAME` | `hasura-in` | `hasura-ae` |
+| `HASURA_PORT` | `8080` | `8081` |
+| `HASURA_DB_NAME` | `hasura_in` | `hasura_ae` |
+| `HASURA_DB_USER` | `hasura_in` | `hasura_ae` |
+
+Separate databases matter: Hasura owns its metadata schema, so two instances
+pointed at one database will fight over it.
+
 ## Behind a reverse proxy or tunnel
 
 The container joins the external `cloudflared` network, so anything else on
-that network reaches it as `http://hasura:8080` — no published port needed.
+that network reaches it as `http://<HASURA_CONTAINER_NAME>:8080` — no
+published port needed.
 Point a proxy host or tunnel public hostname there.
 
 Hasura uses **websockets** for GraphQL subscriptions. Enable websocket
