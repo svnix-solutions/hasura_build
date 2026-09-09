@@ -47,6 +47,25 @@ services:
       # nothing until you define permissions for it in the console.
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE
 
+      # Optional. When set, Hasura keeps its METADATA here and treats
+      # HASURA_GRAPHQL_DATABASE_URL purely as a data source. Leave it unset and
+      # both live in the one database, which is fine for a single-database
+      # deployment but not when the schema is owned by a migrations repo -- you
+      # do not want hdb_catalog inside the database those migrations rebuild.
+      - HASURA_GRAPHQL_METADATA_DATABASE_URL
+
+      # Optional. Base URL actions resolve their handlers against. Metadata
+      # exported from another environment carries relative handlers, so without
+      # this every action is reported inconsistent.
+      - HASURA_GRAPHQL_ACTIONS_HANDLER_WEBHOOK_BASEURL
+
+      # Optional. JSON service account for a BigQuery source. A metadata set
+      # that declares one is inconsistent until this is present.
+      - HASURA_GRAPHQL_BIGQUERY_SA_ACCOUNT
+
+      # Optional. JWT verification config. Unset means admin-secret-only auth.
+      - HASURA_GRAPHQL_JWT_SECRET
+
     # Defaults to loopback. Set HASURA_BIND to a LAN address for direct access.
     ports:
       - "${HASURA_BIND:-127.0.0.1}:${HASURA_PORT:-8080}:8080"
